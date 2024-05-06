@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 
@@ -75,25 +76,38 @@ namespace WebApplication1.Controllers
         
         private int ExecuteStoredProcedure(WarehouseRequest request, SqlConnection connection)
         {
-            using (var command = new SqlCommand("NameOfYourStoredProcedure", connection))
+            try
             {
-                command.CommandType = System.Data.CommandType.StoredProcedure;
-                command.Parameters.AddWithValue("@IdProduct", request.IdProduct);
-                command.Parameters.AddWithValue("@IdWarehouse", request.IdWarehouse);
-                command.Parameters.AddWithValue("@Amount", request.Amount);
-                command.Parameters.AddWithValue("@CreatedAt", request.CreatedAt);
-                
-                var productWarehouseIdParam = new SqlParameter("@ProductWarehouseId", System.Data.SqlDbType.Int);
-                productWarehouseIdParam.Direction = System.Data.ParameterDirection.Output;
-                command.Parameters.Add(productWarehouseIdParam);
+                using (var command = new SqlCommand("AddProductToWarehouse", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
 
-                command.ExecuteNonQuery();
-                
-                int productWarehouseId = Convert.ToInt32(productWarehouseIdParam.Value);
+                    command.Parameters.AddWithValue("@IdProduct", request.IdProduct);
+                    command.Parameters.AddWithValue("@IdWarehouse", request.IdWarehouse);
+                    command.Parameters.AddWithValue("@Amount", request.Amount);
+                    command.Parameters.AddWithValue("@CreatedAt", request.CreatedAt);
 
-                return productWarehouseId;
+                    var productWarehouseIdParam = new SqlParameter("@NewId", SqlDbType.Int);
+                    productWarehouseIdParam.Direction = ParameterDirection.Output;
+                    command.Parameters.Add(productWarehouseIdParam);
+
+                    connection.Open();
+                    command.ExecuteNonQuery();
+
+                    int productWarehouseId = Convert.ToInt32(productWarehouseIdParam.Value);
+                    return productWarehouseId;
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw new Exception("Error executing stored procedure: " + ex.Message);
+            }
+            finally
+            {
+                connection.Close();
             }
         }
+
 
 
 
