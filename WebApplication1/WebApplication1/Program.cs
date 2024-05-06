@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
 using WebApplication1.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
